@@ -1,0 +1,40 @@
+close all; clear all; clc;
+
+k = 4; % comp da informacao
+n = 7; %comp da palavra codigo
+SNR_max = 10;
+M = 4; %ordem de modulação
+subport = 4;
+Nbits = 20e3;
+tam_pref_ciclic = 4;
+SNR = 10;
+
+
+info = randi([0 1], k, 1);
+info_cod = encode(info,n,k); % codificação estilo 1
+
+encData = encode(info_cod,n,k,'hamming/binary'); % codificado
+
+info_entrelac_cod = randintrlv(encData, 1234); %entrelaçamento
+
+info_mod_cod = pskmod(info_entrelac_cod,M); %modulação QPSK
+
+% Canal
+%canal_NLOS = rayleighchan(1/Nbits, 10) %Canal sem visada; 10 = freq doppler
+canal_NLOS = rayleighchan(1/Nbits, 1,([0 1 2]*1e-6),[0 -10 -15]) %Canal sem visada; 10 = freq doppler
+canal_NLOS.StoreHistory = 1;
+
+sinal_Rx_NLOS = filter(canal_NLOS,1, info_mod_cod); % passa pelo canal
+ganho_canal_NLOS = canal_NLOS.PathGains;
+
+info_rx_cod_ofdm = awgn(sinal_Rx_NLOS, SNR); % ruido pelo canal
+
+    xn = filter(ganho_canal_NLOS,1,info_rx_cod_ofdm);
+
+info_demod_cod = pskdemod(xn,M); % demodulação QPSK
+
+info_desent_cod = randdeintrlv(info_demod_cod, 1234); %desentrelaçamento
+
+decData = decode(info_desent_cod,n,k,'hamming/binary'); %decodificando
+
+numerr = biterr(info,decData)
