@@ -1,18 +1,17 @@
-% Seja um sistema de comunica√ß√£o com espalhamento espectral por sequ√™ncia direta (DSSS).
-% Obtenha a taxa de erro de bit com rela√ß√£o √† varia√ß√£o da rela√ß√£o sinal-ru√≠do (SNR). Mostre as
-% formas de onda dos sinais transmitidos e recuperados. Para isso, fa√ßa as seguintes
-% considera√ß√µes:
-% A frequ√™ncia de transmiss√£o ser√° 50 kHz.
-% Considere a modula√ß√£o: BPSK.
-% N√∫mero de chips por bit de informa√ß√£o: N = 20.
-% O ganho de processamento: G = 20.
-% Use o c√≥digo convolucional com taxa 1 ‚ÅÑ 2 , definido pelas matrizes geradoras: g 1 =
-% [1 0 1 0] e g 2 = [1 0 0 1], para codificar a sequ√™ncia de informa√ß√£o.
-% O ru√≠do do canal ser√° o AWGN, com a varia√ß√£o dada por: [0,40] dB.
-% Considere que haver√° um sinal interferente somado ao sinal transmitido, que tem as
-% mesmas caracter√≠sticas do sinal de informa√ß√£o.
-% O trabalho dever√° ser implementado em Matlab. E dever√° ser entregue o c√≥digo
-% implementado, juntamente com o relat√≥rio explicando a simula√ß√£o realizada.
+% Seja um sistema de comunicaÁ„o com espalhamento espectral por sequÍncia direta (DSSS).
+% Obtenha a taxa de erro de bit com relaÁ„o a† variaÁ„o da relaÁ„oo sinal-ruÌdo (SNR). Mostre as
+% formas de onda dos sinais transmitidos e recuperados. Para isso, faÁa as seguintes consideraÁıes:
+% 1 - A frequÍncia de transmiss„oo ser· 50 kHz.
+% 2 - Considere a modulaÁ„o: BPSK.
+% 3 - N˙mero de chips por bit de informaÁ„o: N = 20.
+% 4 - O ganho de processamento: G = 20.
+% 5 - Use o cÛdigo convolucional com taxa 1/2 , definido pelas matrizes geradoras: g 1 =
+% [1 0 1 0] e g 2 = [1 0 0 1], para codificar a sequÍncia de informaÁ„o.
+% 6 - O ruÌdo do canal ser· o AWGN, com a variaÁ„o dada por: [0,40] dB.
+% 7 - Considere que haver· um sinal interferente somado ao sinal transmitido, que tem as
+% mesmas caracterÌsticas do sinal de informaÁ„o.
+% O trabalho dever· ser implementado em Matlab. E dever· ser entregue o cÛdigo
+% implementado, juntamente com o relatÛrio explicando a simulaÁ„o realizada.
 
 close all;
 clear all;
@@ -58,23 +57,24 @@ for nmsg = 1:TamMsg
     
     % Nesta variavel info acredito que teremos a sequencia de bits que
     % devemos transmitir
-    info = horzcat(info, Code);
-    
+    info = horzcat(info, Code);  
 end
-
 % Aqui agora vamos transmitir a info gerada ...
 
 % superamostragem da info
 info_up = upsample(info, N_sup_bits);
 info_NRZ = filter(ones(1,N_sup_bits),1,info_up)*2-1;
+plot(info_NRZ);ylim([-1.2 1.2]);xlim([0 5e4]);grid minor;
 
 % gerando codigo de esplhamento... e assim ?
 cod_esp = randi([0 1], 1, N_chips*length(info));
-cod_esp_up = upsample(cod, N_sup_chips);
-cod_esp_NRZ = filter(ones(1,N_sup_chips),1,cod_up)*2-1;
+cod_esp_up = upsample(cod_esp, N_sup_chips);
+cod_esp_NRZ = filter(ones(1,N_sup_chips),1,cod_esp_up)*2-1;
+figure(2)
+plot(cod_esp_NRZ);ylim([-1.2 1.2]);xlim([0 5e4]);grid minor;
 
 % Espalhando o sinal no espectro... e isso mesmo?
-sinal_esp = info_NRZ .* cod_NRZ;
+%sinal_esp = info_NRZ .* cod_NRZ;
  
 % Aqui acho que ja da pra transmitir (confirmar com o professor se o que foi
 % feito acima esta correto). Alem disso, precisamos saber: 50 KHz e a frequencia da
