@@ -64,18 +64,30 @@ end
 % superamostragem da info
 info_up = upsample(info, N_sup_bits);
 info_NRZ = filter(ones(1,N_sup_bits),1,info_up)*2-1;
-plot(info_NRZ);ylim([-1.2 1.2]);xlim([0 5e4]);grid minor;
+
+
+figure(1)
+subplot(311)
+plot(rectpulse(m,40000));ylim([-0.2 1.2]);grid minor;title('Info');
+subplot(312)
+%plot(info_NRZ);ylim([-1.2 1.2]);xlim([0 5e4]);grid minor;title('Info NRZ');
+
 
 % gerando codigo de esplhamento... e assim ?
 cod_esp = randi([0 1], 1, N_chips*length(info));
 cod_esp_up = upsample(cod_esp, N_sup_chips);
 cod_esp_NRZ = filter(ones(1,N_sup_chips),1,cod_esp_up)*2-1;
-figure(2)
-plot(cod_esp_NRZ);ylim([-1.2 1.2]);xlim([0 5e4]);grid minor;
+
+%subplot(313)
+plot(cod_esp_NRZ);ylim([-1.2 1.2]);xlim([0 2e4]);grid minor;
+
 
 % Espalhando o sinal no espectro... e isso mesmo?
-%sinal_esp = info_NRZ .* cod_NRZ;
- 
+sinal_esp = info_NRZ .* cod_esp_NRZ;
+
+subplot(313)
+plot(sinal_esp);ylim([-1.2 1.2]);xlim([0 2e4]);grid minor;
+
 % Aqui acho que ja da pra transmitir (confirmar com o professor se o que foi
 % feito acima esta correto). Alem disso, precisamos saber: 50 KHz e a frequencia da
 % portadora ou a frequencia de banda do sinal (Bs) ? Se nao for a
