@@ -10,20 +10,22 @@ clear all
 close all
 clc
 
+%% Parametros iniciais 
 rs = 2.41e9; % taxa de simbolo da entrada do canal/taxa de transmissao / frequência de transmissão
 ts = 1/rs; % tempo de simbolo
 num_sim = 23; % numero de simbolos a ser transmitidos
+num_subs = 24;
 r = 0.5; % taxa codigo conv
 t = [0:ts:num_sim/rs-(ts)]; 
 M = 4; %ordem da modulação M = representa geração de bits %taxa de simbolo de entrada do canal
 B = 20e6;
-% O canal adotado será o canal ITU Vehicular-A, com as seguintes especificações:
-t_am = 0.1e-9; %Período de amostragem
-doppler = 10;%fd   Frequência doppler
-delay = [0 300 700 1100 1700 2500].*1e-9; %Espalhamento de atraso
-ganho = [0 -1 -9 -10 -15 -20]; %Ganhos dos múltiplos percursosdb
-%%
-info = randi(M,num_sim,1)-1; %gerando informação a ser transmitida
+t_am = 0.1e-9; %Período de amostragem % O canal adotado será o canal ITU Vehicular-A, com as seguintes especificações:
+doppler = 10;%fd   Frequência doppler % O canal adotado será o canal ITU Vehicular-A, com as seguintes especificações:
+delay = [0 300 700 1100 1700 2500].*1e-9; %Espalhamento de atraso % O canal adotado será o canal ITU Vehicular-A, com as seguintes especificações:
+ganho = [0 -1 -9 -10 -15 -20]; %Ganhos dos múltiplos percursosdb % O canal adotado será o canal ITU Vehicular-A, com as seguintes especificações:
+ 
+%% gerando informação a ser transmitida
+info = randi([0 1],num_sim,num_subs); 
 info_mod = pskmod(info,M); %utilizando uma função que faz a modulação PSK (modulação digital em fase)
 canal_ray = rayleighchan(ts, doppler);% gerando o objeto que representa o canal
 canal_ray.StoreHistory = 1; % hablitando a gravação dos ganhos de canal
