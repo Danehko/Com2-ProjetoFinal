@@ -1,12 +1,12 @@
 clear all;
 
-%% parameters
+% parameters
 Fs = 1000;
 fc = 100;
 fp = 4;
 bit_t = 0.1;
 
-%% message generation with BPSK
+% message generation with BPSK
 m = [0 0 1 1 1 1 0 0];
 for bit = 1:length(m)
    if(m(bit)==0)
@@ -17,7 +17,7 @@ end
 message =  repmat(m,fp,1);
 message =  reshape(message,1,[]);
 
-%% PN generation and multiply with message
+% PN generation and multiply with message
 pn_code = randi([0,1],1,length(m)*fp);
 
 for bit = 1:length(pn_code)
