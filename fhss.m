@@ -42,16 +42,17 @@ end
     
     info = hamm.*2 -1; %para transformar 0 em -1 e 1 em +1
     filtro_nrz = ones(1,upsamp);
-    up = upsample(info,upsamp)
+    up = upsample(info,upsamp);
     info_BPSK_cod = filter(filtro_nrz,1,up);
     bits_cod = length(hamm);
 %% modulando e enviando
-    duracao = bits_cod*Tb; %gerar vetor de tempo e frequencia
-    t = 0:T:duracao-T; % Vetor de tempo
+    duracao = bits_cod*Tb; 
+    t = 0:T:duracao-T; 
 
     %vetor frequencia
     f = [-fa/2:fa/length(t):(fa/2)-1];
     port_fcentr = cos(2*pi*fc*t);
+    
     %modulando em bpsk
     sig_mod_bpsk = info_BPSK_cod.*port_fcentr;
    
@@ -109,27 +110,111 @@ end
     
     %% Recebendo
     Eb = sum(sig_transm.^2)/bits_cod;
-    SNR = 100;
+    SNR = 40; % Definir nivel de sinal ruido
     
-    ruido_linear= Eb/10^((SNR)/10); %ruido
-    ruido_gerado = randn(1,length(sig_transm)).*sqrt(ruido_linear/2);
-    %adicionando ruido
-    r_x = sig_transm + ruido_gerado;
-    r_x = r_x.*sig_por_chan;
-    r_x = r_x.*port_fcentr;
-    limiar_decisao = (-1+1)/2;
-    %correlator
-    aux = reshape(r_x,[upsamp,bits_cod]);
+    sigEner = norm(sig_transm(:))^2; %ruido
+    noiseEner = sigEner/(10^(SNR/10));        % energy of noise to be added
+    noiseVar = noiseEner/(length(sig_transm(:)-1));     % variance of noise to be added
+    noiseStd = sqrt(noiseVar);                   % std. deviation of noise to be added
+    noise = noiseStd*randn(size(sig_transm));           % noise
+    noisySig = sig_transm+noise;                        % noisy signal
+    rec_sig = noisySig.*sig_por_chan.*port_fcentr; % por canal para cada freq e pela freq central
+
+    aux = reshape(rec_sig,[upsamp,bits_cod]);
     correlator = sum(aux)./upsamp;
-    informacao_codificada = correlator > limiar_decisao;
+    info_cod = correlator > 0;
+    %decodificando usando hamming(7,4)
+
+    decod_info = decode(info_cod,n,k,'hamming/binary');
     
-    %decode hamming
-    informacao_recuperada = decode(informacao_codificada,n,k,'hamming/binary');
+    verifica_informacao = isequal(decod_info,info_orig);
     
-    verifica_informacao = isequal(informacao_recuperada,info_orig);
     if(verifica_informacao == 1)
-      msgbox('Informacao recuperada com sucesso');
+    	display('Informacao recuperada com sucesso');
     else
-      msgbox('Informacao recuperada com erro');
+        display('Informacao recuperada com erro');
     end
+
+
+    %% Plots
+    figure(1)
+    
+    %informação gerada no randi
+    subplot(4,1,1);
+    stem(info_orig);
+    set(gca,'XTick',1:N,'XLim',[0.66 N+0.33]);    %Setting axis limits and scale for the graph
+    title('Informação Original');
+    ylabel('Amplitude(V)');
+    xlabel('Ticks');
+
+    %info transmitida
+    subplot(4,1,2);
+    plot(t,sig_transm);
+    %set(gca,'XTick',0:t,'XLim',[0.66 N+0.33]);    %Setting axis limits and scale for the graph
+    xlim([0 0.005])
+    title('Parte da informação transmitida');
+    ylabel('Amplitude(V)');
+    xlabel('Tempo(s)');
+
+    %codigo de canal
+    subplot(4,1,3);
+    plot(t,sig_por_chan);
+    xlim([0 0.0008]);
+    title('Código aleatório de canal ocupado');
+    ylabel('Amplitude(V)');
+    xlabel('Tempo(s)');
+
+    
+    subplot(4,1,4);
+    stem(decod_info);
+    set(gca,'XTick',1:N,'XLim',[0.66 N+0.33]);    %Setting axis limits and scale for the graph
+    title('Informação Recuperada');
+    ylabel('Amplitude(V)');
+    xlabel('Ticks');
+    
+    %% Figura 2
+    figure(2)
+    %espectro do sinal transmitido
+    subplot(2,1,1);
+    plot(f,fftshift(abs(fft(sig_transm))));
+    ylabel('Amplitude(V)');
+    xlabel('Frequencia(Hz)');
+    xlim([-4.5e5 4.5e5]);
+    ylim([0 2e3]);
+    title('Espectro do sinal transmitido');
+    
+    %espectro do sinal transmitido
+    subplot(2,1,2);
+    plot(f,fftshift(abs(fft(rec_sig))));
+    ylabel('Amplitude(V)');
+    xlabel('Frequencia(Hz)');
+    xlim([-4.5e5 4.5e5]);
+    ylim([0 2e3]);
+    title('Espectro do sinal recuperado');
+    
+    %% SNR variante
+    SNR_MAX = Nb;
+    for SNR = 0:SNR_MAX
+        %% https://www.mathworks.com/matlabcentral/fileexchange/62820-add-awgn-noise-to-signal
+        sigEner = norm(sig_transm(:))^2;                    % energy of the signal
+        noiseEner = sigEner/(10^(SNR/10));        % energy of noise to be added
+        noiseVar = noiseEner/(length(sig_transm(:)-1));     % variance of noise to be added
+        noiseStd = sqrt(noiseVar);                   % std. deviation of noise to be added
+        noise = noiseStd*randn(size(sig_transm));           % noise
+        noisySig = sig_transm+noise;                        % noisy signal
+        aux = reshape(rec_sig,[upsamp,bits_cod]);
+        correlator = sum(aux)./upsamp;
+        info_cod = correlator > 0;
+        decod_info = decode(info_cod,n,k,'hamming/binary');
+        
+        [n_err(SNR+1),tx_err(SNR+1)]=biterr(decod_info,info_orig);
+        
+end
+        figure(3);
+        semilogy([0:SNR_MAX],tx_err);
+        title('BPSK - FHSS')
+        ylabel('BER');xlabel('SNR[dB]');
+    
+
+
     
