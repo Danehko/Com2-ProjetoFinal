@@ -3,7 +3,7 @@ close all
 clc
 
 %% Parametros iniciais 
-rs = 2.41e9; % taxa de simbolo da entrada do canal/taxa de transmissao / frequ�ncia de transmissão
+rs = 2.41e9; % taxa de simbolo da entrada do canal/taxa de transmissao / frequ�ncia de transmissão
 ts = 1/rs; % tempo de simbolo
 num_sim = 23; % numero de simbolos a ser transmitidos
 num_subs = 24; % numero de subsportadora
@@ -92,4 +92,5 @@ for SNR = 0:40 %este loop representa a variação da SNR
    [num_ray(SNR+1), taxa_ray(SNR+1)]  = symerr(info(1,1:end-24),decod_info_rec(1,2:end-23)); % comparando a sequencia de informação gerada com a informação demodulada
 end
 % 
-semilogy([0:40],taxa_ray,'r');
+semilogy([0:40],taxa_ray,'r'); grid minor;
+title('Desempenho BER X SNR'); ylabel('BER');xlabel('SNR [dB]');
