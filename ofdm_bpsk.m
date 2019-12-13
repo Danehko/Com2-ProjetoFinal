@@ -66,33 +66,30 @@ tx = [LTS_T x];
  
 for SNR = 0:40 %este loop representa a variação da SNR
     %% Canal/Transmitindo 
-%     canal_ray = rayleighchan(ts, doppler,delay,ganho);% gerando o objeto que representa o canal
-%     canal_ray.StoreHistory = 1; % hablitando a gravação dos ganhos de canal
-%     sinal_rec_ray = filter(canal_ray, tx); %esta função representa  o ato de transmitir um sinal modulado por um canal sem fio
-%     
-%     ganho_ray = canal_ray.PathGains; % salvando os ganhos do canal
-%     sinal_rec_ray_awgn = awgn(sinal_rec_ray,SNR); % Modelando a inserção do ruido branco no sinal recebido
-    sinal_rec_ray_awgn = tx;
+    canal_ray = rayleighchan(ts, doppler,delay,ganho);% gerando o objeto que representa o canal
+    canal_ray.StoreHistory = 1; % hablitando a gravação dos ganhos de canal
+    sinal_rec_ray = filter(canal_ray, tx); %esta função representa  o ato de transmitir um sinal modulado por um canal sem fio
+    
+    ganho_ray = canal_ray.PathGains; % salvando os ganhos do canal
+    sinal_rec_ray_awgn = awgn(sinal_rec_ray,SNR); % Modelando a inserção do ruido branco no sinal recebido
     %% receptor
     reshape_sinal_rx = reshape(sinal_rec_ray_awgn, (80), []);
     y_semPC = reshape_sinal_rx((prefixo_ciclico + 1): end, :);
     LTS_REC = y_semPC(:,1:2);
     OFDM_REC = y_semPC(:,3:end);
-    %H = fft(ganho_ray.', 64);
-    %auxy = Y ./ repmat(H, 1, size(Y, 2));
-    %saida = reshape(auxy, 1, []);
-    Y = fft(OFDM_REC);
+    Y = fft(OFDM_REC, 64);%Y = fft(OFDM_REC);
+    T = fft(ganho_ray(1,1:length(delay)), 64); 
+    H =  repmat(T.', 1, size(Y, 2));
+    auxy = Y ./ H;
+    saida = reshape(auxy, 1, []);
     
     info_rec = [ Y(7:11,:); Y(13:25,:); Y(27:32,:); Y(34:39,:); Y(41:53,:); Y(55:59,:)];
     info_rec_demod = pskdemod(info_rec,M);
     info_rec_reshape = reshape(info_rec_demod,1,[]);
     aux3 = isequal(info_rec_reshape, info_conv);
     decod_info_rec = vitdec(info_rec_reshape,trelica,1,'cont','hard');
-    aux4 = isequal(decod_info_rec(1,2:end-23), info(1,1:end-24))
-    %% rece
-%     sinalEqRay = saida./ganho_ray; % (equalizando)eliminando os efeitos de rotação de fase e alteração de amplite no sinal recebido
-%     sinalDemRay = pskdemod(sinalEqRay,M);% demodulando o sinal equalizado
-%     [num_ray(SNR+1), taxa_ray(SNR+1)]  = symerr(info,sinalDemRay); % comparando a sequencia de informação gerada com a informação demodulada
+    aux4 = isequal(decod_info_rec(1,2:end-23), info(1,1:end-24));
+   [num_ray(SNR+1), taxa_ray(SNR+1)]  = symerr(info(1,1:end-24),decod_info_rec(1,2:end-23)); % comparando a sequencia de informação gerada com a informação demodulada
 end
 % 
-%semilogy([0:40],taxa_ray,'r',[0:40],taxa_ric,'b');
+semilogy([0:40],taxa_ray,'r');
